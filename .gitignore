@@ -1,0 +1,5 @@
+# I'm using emacs
+*~
+# and coffee-script
+*.js
+node_modules
