@@ -12,8 +12,8 @@ fs      = require 'fs'
 path    = require 'path'
 walker  = require 'walker'
 agent   = require 'superagent'
-peers   = require 'peers'
 
+peers   = require './peers'
 conf    = require './conf'
 logs    = require './logs'
 
@@ -32,18 +32,27 @@ app.get '/index', (req,res) ->
 app.get '/fetch', (req,res) ->
     host = req.query?.h? or peers.getHost()
     agent.get "#{host}/index"
-    .end (err, res) ->
+    .end (err, data) ->
         if err
             console.log "Error fetching: #{err}"
             res.json err
         else
-            logs.sync host, res
-            res.json res
- 
+            data = JSON.parse data.text
+            logs.sync host, data
+            res.json data
 
+app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
+    logHash = req.params[0]
+    fs.readFile path.join(conf.logPath,logHash), (err, data) ->
+        res.json JSON.parse data unless err
 
-app.use express.static conf.logPath
+#app.use express.static conf.logPath
 
+port = conf.port
+if (p = process.argv[2])
+    p = parseInt p
+    if ( p > 1024 and p < 65536 )
+        port = p
 
-app.listen conf.port
+app.listen port
 
