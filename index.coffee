@@ -4,7 +4,7 @@
 # hex
 
 # Without any optimization, when two peers connect, they exchange the
-# list of (hashes of) leaf logs they have and then, they ask for
+# list of (hashes of) logs they have and then, they ask for
 # missing ones.
 
 express = require 'express'
@@ -26,10 +26,10 @@ app.set 'views', 'views'
 
 # asking for hashes
 app.get '/index', (req,res) ->
-    res.json logs.leaves req.query
+    res.json logs.find req.query
 
 # local API
-app.get '/fetch', (req,res) ->
+app.get '/sync', (req,res) ->
     host = req.query?.h? or peers.getHost()
     agent.get "#{host}/index"
     .end (err, data) ->
@@ -45,8 +45,6 @@ app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
     logHash = req.params[0]
     fs.readFile path.join(conf.logPath,logHash), (err, data) ->
         res.json JSON.parse data unless err
-
-#app.use express.static conf.logPath
 
 port = conf.port
 if (p = process.argv[2])
