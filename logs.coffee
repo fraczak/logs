@@ -64,6 +64,18 @@ find = (query) ->
     ld.map _logs, (val, key) ->
         key
 
+add = (data, cb) ->
+    m = sign data
+    logHash = hash m
+    _processing[logHash] = true
+    fs.writeFile path.join(conf.logPath,logHash), JSON.stringify(m), (err) ->
+        if not err
+            _logs[logHash] = true
+            cb null, logHash
+        else
+            cb err
+        delete _processing[logHash]
+
 _fetch = (host, logHash) ->
     return if _processing[logHash] or _logs[logHash]
     _processing[logHash] = true
@@ -89,4 +101,4 @@ sync = (host, logs) ->
     ld.forEach logs, (logHash) ->
         _fetch host, logHash
 
-module.exports = { verifySign, sign, hash, find, sync }
+module.exports = { verifySign, hash, find, sync, add }

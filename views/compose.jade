@@ -1,0 +1,10 @@
+html(lang="us")
+  head
+   meta(charset="utf-8")
+   title Compose your message
+  body
+    form.center(action="/post", method="post")
+      | Message: 
+      textarea(name='data')
+      div.center
+        input(type='submit', value='Send')

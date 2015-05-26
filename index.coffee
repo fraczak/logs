@@ -12,6 +12,7 @@ fs      = require 'fs'
 path    = require 'path'
 walker  = require 'walker'
 agent   = require 'superagent'
+bodyParser = require 'body-parser'
 
 peers   = require './peers'
 conf    = require './conf'
@@ -21,8 +22,9 @@ app = express()
 
 app.set 'view engine', 'jade'
 app.set 'views', 'views'
+app.use bodyParser.json()
+app.use bodyParser.urlencoded { extended: true }
 
-# peer API
 
 # asking for hashes
 app.get '/index', (req,res) ->
@@ -45,6 +47,16 @@ app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
     logHash = req.params[0]
     fs.readFile path.join(conf.logPath,logHash), (err, data) ->
         res.json JSON.parse data unless err
+
+app.post "/post", (req,res) ->
+    data = req.body.data
+    console.log data
+    logs.add data, (err, logHash) ->
+        return res.json logHash unless err
+        res.status(400).json err
+
+app.get "/compose", (req,res) ->
+    res.render "compose"
 
 port = conf.port
 if (p = process.argv[2])
