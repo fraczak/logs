@@ -18,7 +18,8 @@ peers   = require './peers'
 conf    = require './conf'
 logs    = require './logs'
 
-app = express()
+app   = express()
+local = express()
 
 app.set 'view engine', 'jade'
 app.set 'views', 'views'
@@ -30,8 +31,16 @@ app.use bodyParser.urlencoded { extended: true }
 app.get '/index', (req,res) ->
     res.json logs.find req.query
 
-# local API
-app.get '/sync', (req,res) ->
+app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
+    logHash = req.params[0]
+    fs.readFile path.join(conf.logPath,logHash), (err, data) ->
+        res.json JSON.parse data unless err
+
+#### local APIs
+app.use "/#{conf.secret}", local
+
+#  trigger sync with a peer 
+local.get "/sync", (req,res) ->
     host = req.query?.h? or peers.getHost()
     agent.get "#{host}/index"
     .end (err, data) ->
@@ -43,19 +52,15 @@ app.get '/sync', (req,res) ->
             logs.sync host, data
             res.json data
 
-app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
-    logHash = req.params[0]
-    fs.readFile path.join(conf.logPath,logHash), (err, data) ->
-        res.json JSON.parse data unless err
-
-app.post "/post", (req,res) ->
+#  post a local message
+local.post "/post", (req,res) ->
     data = req.body.data
-    console.log data
     logs.add data, (err, logHash) ->
         return res.json logHash unless err
         res.status(400).json err
 
-app.get "/compose", (req,res) ->
+#  a web interface to compose a message
+local.get "/compose", (req,res) ->
     res.render "compose"
 
 port = conf.port
@@ -64,5 +69,6 @@ if (p = process.argv[2])
     if ( p > 1024 and p < 65536 )
         port = p
 
-app.listen port
+app.listen port, ->
+    console.log "http://localhost:#{port}/#{conf.secret}/compose"
 
