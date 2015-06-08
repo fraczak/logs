@@ -39,6 +39,8 @@ app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
 #### local APIs
 app.use "/#{conf.secret}", local
 
+app.use express.static "public"
+
 #  trigger sync with a peer 
 local.get "/sync", (req,res) ->
     host = req.query?.h? or peers.getHost()
@@ -63,12 +65,16 @@ local.post "/post", (req,res) ->
 local.get "/compose", (req,res) ->
     res.render "compose"
 
+local.get "/", (req,res) ->
+    res.render "client"
+
 port = conf.port
 if (p = process.argv[2])
     p = parseInt p
     if ( p > 1024 and p < 65536 )
         port = p
 
+
 app.listen port, ->
-    console.log "http://localhost:#{port}/#{conf.secret}/compose"
+    console.log "http://localhost:#{port}/#{conf.secret}/"
 
