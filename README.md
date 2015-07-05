@@ -48,3 +48,22 @@ Who needs gmail?
 3. You are done, as long as you keep syncing your copy of the
    collection with others
 
+Running two servers locally
+=============================
+
+As a bootstrap for testing, I use two servers in two different directories (so the `./public/logs` subdirectory are different for the two servers).
+
+    ~/logs >
+      cd ..
+      cp -a logs logs_bis
+      sed 's/port\([ ]*\): 3333/port\1: 4444/' logs/conf.coffee > logs_bis/conf.coffee
+      sed 's/127.0.0.1:4444/127.0.0.1:3333/' logs/peers.coffee > logs_bis/peers.coffee
+      cd logs_bis/private
+      . gen_key.sh
+      cd ..
+      coffee index.coffee &
+      cd ../logs
+      coffee index.coffee &
+
+Now, the server in `~/logs/` listens on port `3333` and expects a peer at `127.0.0.1:4444`.
+The server in `~/logs_bis/` listens on `4444` and expects a peer at `127.0.0.1:3333`.
