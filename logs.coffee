@@ -11,6 +11,11 @@ _logs       = {}
 _ready      = false
 _processing = {}
 
+isHash = do ->
+    re =  /^([a-f0-9]{64})$/
+    (hash) ->
+        return hash.match re
+
 do ->
     walker conf.logPath
     .on 'file', (file) ->
@@ -24,13 +29,13 @@ verifySign = ({data,author,sign}) ->
     try
         v = crypto.createVerify 'RSA-SHA256'
         v.update data
-        return v.verify author, sign, 'hex'
+        return v.verify conf.strToPem(author), sign, 'hex'
     catch e
         console.error "Error: #{e}"
         return false
 verifySign["in"] =
     data:"String"
-    author: "PemPublicKeyString"
+    author: "PublicKeyString"
     sign: "HexSignString"
 verifySign["out"] = "Boolean"
 
@@ -38,24 +43,23 @@ sign = (data) ->
     s = crypto.createSign 'RSA-SHA256'
     s.update data
     data  : data
-    author: conf.pubKey
-    sign  : s.sign conf.privKey, 'hex'
+    author: conf.pubKeyStr
+    sign  : s.sign conf.privKeyPem, 'hex'
 sign["in"] =
     "String"
 sign["out"] =
     data:"String"
-    author: "PemPublicKeyString"
+    author: "PublicKeyString"
     sign: "HexSignString"
 
 hash = ({data,author,sign}) ->
-    console.log "HASH: #{data}, #{author}, #{sign}"
     h = crypto.createHash 'SHA256'
     for part in [data,author,sign]
         h.update part
     h.digest 'hex'
 hash["in"] =
     data:"String"
-    author: "PemPublicKeyString"
+    author: "PublicKeyString"
     sign: "HexSignString"
 hash["out"] = "HexSha256String"
 
@@ -63,6 +67,14 @@ find = (query) ->
     # query could be a map {author: [...], etc...}
     ld.map _logs, (val, key) ->
         key
+
+get = (hash, cb) ->
+    cb new Error "Not a valid hash!" unless isHash hash
+    fs.readFile path.join(conf.logPath,hash), (err, data) ->
+        if err
+            console.log err
+            return cb new Error "Log not found!"
+        cb null, JSON.parse data
 
 add = (data, cb) ->
     m = sign data
@@ -101,4 +113,4 @@ sync = (host, logs) ->
     ld.forEach logs, (logHash) ->
         _fetch host, logHash
 
-module.exports = { verifySign, hash, find, sync, add }
+module.exports = { verifySign, hash, find, sync, add, get, isHash }

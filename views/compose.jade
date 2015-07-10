@@ -3,8 +3,12 @@ html(lang="us")
    meta(charset="utf-8")
    title Compose your message
   body
-    form.center(action="post", method="post")
-      | Message: 
-      textarea(name='data')
-      div.center
+    form(action="post", method="post")
+      div
+        | to: 
+        textarea(name='to',style="width:100%; height:110px;")
+      div
+        | msg: 
+        textarea(name='msg',style="width:100%; height:220px;")
+      div
         input(type='submit', value='Send')

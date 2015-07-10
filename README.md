@@ -41,12 +41,26 @@ Who needs gmail?
            msg  : encrypt(text,publicKyeTo)
          }
 
-      or, even better, a simple js app for formatting messages
-
 2. Share the log with people you want to keep in touch with
 
 3. You are done, as long as you keep syncing your copy of the
    collection with others
+
+Using `Logs` as address book (`yp`)
+-----------------------------------
+
+1. Create a new pair of public/private keys just for `yp`
+
+2. Create a `log` signed by `yp` private key with the collection of addresses,
+   i.e., something like:
+
+        data: {
+          yp : [{name:"Wojtek", key: "MIGfMA0GCSqGS...", ... }, ...]
+        }
+
+3. Now, if you want to access your `yp`, just find the `log` by `yp` public key,
+   or by the hash of the `log`.
+
 
 Running two servers locally
 =============================

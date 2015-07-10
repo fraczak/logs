@@ -17,6 +17,8 @@ bodyParser = require 'body-parser'
 peers   = require './peers'
 conf    = require './conf'
 logs    = require './logs'
+msgs    = require './msgs'
+yp      = require './yp'
 
 app   = express()
 local = express()
@@ -28,20 +30,21 @@ app.use bodyParser.urlencoded { extended: true }
 
 
 # asking for hashes
-app.get '/index', (req,res) ->
+app.get '/logs', (req,res) ->
     res.json logs.find req.query
 
-app.get /^[/]([a-f0-9]{64})$/, (req, res) ->
-    logHash = req.params[0]
-    fs.readFile path.join(conf.logPath,logHash), (err, data) ->
-        res.json JSON.parse data unless err
+app.get '/logs/:hash', (req, res) ->
+    logs.get req.params.hash, (err, data) ->
+        if err
+            res.status(400).json err
+        res.json data
 
 #### local APIs
 app.use "/#{conf.secret}", local
 
 app.use express.static "public"
 
-#  trigger sync with a peer 
+#  trigger sync with a peer
 local.get "/sync", (req,res) ->
     host = req.query?.h? or peers.getHost()
     agent.get "#{host}/index"
@@ -56,14 +59,31 @@ local.get "/sync", (req,res) ->
 
 #  post a local message
 local.post "/post", (req,res) ->
-    data = req.body.data
-    logs.add data, (err, logHash) ->
+    to = conf.pemToStr req.body.to
+    msg = req.body.msg
+    msgs.add to, msg, (err, logHash) ->
         return res.json logHash unless err
         res.status(400).json err
 
-#  a web interface to compose a message
+# get message by its `hash`
+local.get "/get/:hash", (req,res) ->
+    msgs.get req.params.hash, (err, data) ->
+        if err
+            res.status(400).json err
+        res.json data
+
+###################################
+#  web interfaces to `msgs` messages
 local.get "/compose", (req,res) ->
-    res.render "compose"
+    res.render "compose", { yp }
+local.get "/browse", (req,res) ->
+    res.render "browse", { msgs, yp }
+local.get "/read/:hash", (req,res) ->
+    msgs.get req.params.hash, (err, data) ->
+        if err
+            res.status(400).json err
+        res.render "read", data
+
 
 local.get "/", (req,res) ->
     res.render "client"
@@ -77,4 +97,3 @@ if (p = process.argv[2])
 
 app.listen port, ->
     console.log "http://localhost:#{port}/#{conf.secret}/"
-
