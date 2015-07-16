@@ -1,0 +1,12 @@
+html(lang="us")
+  head
+   meta(charset="utf-8")
+   title messages
+  body
+    h1.
+      Messages
+    ol
+      each msg, idx in messages
+        li From: #{yp.getName(msg.author)}
+          textarea(style="width:100%; height:220px;")
+            = msg.msg

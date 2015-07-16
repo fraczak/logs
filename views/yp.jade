@@ -1,0 +1,15 @@
+html(lang="us")
+  head
+    meta(charset="utf-8")
+    title Yellow Pages
+  body
+    h1.
+      Yellow Pages
+    ul
+      each val in yp.all()
+        li
+          a(href='compose?to='+val.name) #{val.name}
+          textarea(style="width:100%;height:110px;")
+            | #{yp.getPem(val.name)}
+    footer(id="footer")
+    //- script(src="/client.js")

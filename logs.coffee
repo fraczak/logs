@@ -4,6 +4,7 @@ fs      = require 'fs'
 ld      = require 'lodash'
 agent   = require 'superagent'
 path    = require 'path'
+async   = require 'async'
 
 conf    = require './conf'
 
@@ -63,10 +64,19 @@ hash["in"] =
     sign: "HexSignString"
 hash["out"] = "HexSha256String"
 
-find = (query) ->
+find = (query, cb) ->
     # query could be a map {author: [...], etc...}
-    ld.map _logs, (val, key) ->
+    query ?= ->
+        true
+    aux = ld.map _logs, (val, key) ->
         key
+    async.filter aux
+    , (hash, c) ->
+        get hash, (err, data) ->
+            return c false if err
+            console.log ">>>>", data
+            c query data
+    , cb
 
 get = (hash, cb) ->
     cb new Error "Not a valid hash!" unless isHash hash
@@ -74,7 +84,12 @@ get = (hash, cb) ->
         if err
             console.log err
             return cb new Error "Log not found!"
-        cb null, JSON.parse data
+        try
+            res = JSON.parse data
+        catch e
+            console.error e
+            cb new Error "Message is not a JSON"
+        cb null, res
 
 add = (data, cb) ->
     m = sign data

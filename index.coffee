@@ -31,7 +31,9 @@ app.use bodyParser.urlencoded { extended: true }
 
 # asking for hashes
 app.get '/logs', (req,res) ->
-    res.json logs.find req.query
+    # req.query
+    logs.find null, (data) ->
+        res.json data
 
 app.get '/logs/:hash', (req, res) ->
     logs.get req.params.hash, (err, data) ->
@@ -46,7 +48,7 @@ app.use express.static "public"
 
 #  trigger sync with a peer
 local.get "/sync", (req,res) ->
-    host = req.query?.h? or peers.getHost()
+    host = req.query?.h or peers.getHost()
     agent.get "#{host}/index"
     .end (err, data) ->
         if err
@@ -75,15 +77,18 @@ local.get "/get/:hash", (req,res) ->
 ###################################
 #  web interfaces to `msgs` messages
 local.get "/compose", (req,res) ->
-    res.render "compose", { yp }
+    res.render "compose", { to:req.query?.to, yp }
 local.get "/browse", (req,res) ->
-    res.render "browse", { msgs, yp }
+    msgs.getAllToMe (err, messages) ->
+        console.log messages
+        res.render "browse", { messages, yp}
 local.get "/read/:hash", (req,res) ->
     msgs.get req.params.hash, (err, data) ->
         if err
             res.status(400).json err
         res.render "read", data
-
+local.get "/yp", (req,res) ->
+    res.render "yp", { yp }
 
 local.get "/", (req,res) ->
     res.render "client"

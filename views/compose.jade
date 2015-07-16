@@ -5,8 +5,15 @@ html(lang="us")
   body
     form(action="post", method="post")
       div
-        | to: 
+        | alias:
+        textarea(style="width:100%;")
+          if to
+            | #{to}
+      div
+        | address:
         textarea(name='to',style="width:100%; height:110px;")
+          if to
+            | #{yp.getPem(to)}
       div
         | msg: 
         textarea(name='msg',style="width:100%; height:220px;")

@@ -1,4 +1,5 @@
 crypto  = require 'crypto'
+async   = require 'async'
 conf    = require './conf'
 logs    = require './logs'
 
@@ -20,4 +21,15 @@ get = (msgHash, cb) ->
         catch e
             cb e, log
 
-module.exports = { add, get }
+getAllToMe = (cb) ->
+    logs.find (log) ->
+        try
+            msg = JSON.parse log.data
+            return true if msg.to is conf.pubKeyStr
+        catch e
+            console.log e
+        return false
+    , (hashes) ->
+        async.map hashes, get, cb
+
+module.exports = { add, get, getAllToMe }
