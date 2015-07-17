@@ -7,6 +7,6 @@ html(lang="us")
       Messages
     ol
       each msg, idx in messages
-        li From: #{yp.getName(msg.author)}
+        li From: #{yp.get(msg.author).name}
           textarea(style="width:100%; height:220px;")
             = msg.msg
