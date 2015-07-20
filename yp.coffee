@@ -2,11 +2,10 @@ ld   = require "lodash"
 conf = require "./conf"
 jfo  = require "json-file-object"
 
-
 data = ld.indexBy [{pubKeyStr:conf.pubKeyStr, name:"Me"}], 'pubKeyStr'
 data = jfo
     value : data
-    file  : "yp.json"
+    file  : "yp.db"
 
 _data = ld.transform data, (res, val) ->
     res[val.name] = val
